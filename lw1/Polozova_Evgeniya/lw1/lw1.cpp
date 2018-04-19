@@ -4,10 +4,13 @@
 #include "stdafx.h"
 
 using namespace std;
-
-double getPiMonteCarlo(int numberOfPoints)
+namespace
 {
-	int numOfPointsInCircle = 0;
+	const int NUMBER_OF_ARGUMENTS = 3;
+}
+
+void getNumInCircle(int numberOfPoints, int & numOfPointsInCircle)
+{
 	double radius = 1.0;
 	double x;
 	double y;
@@ -23,32 +26,49 @@ double getPiMonteCarlo(int numberOfPoints)
 			numOfPointsInCircle++;
 		}
 	}
-	return (numOfPointsInCircle * 4.0 / numberOfPoints);
 }
+
 
 int main(int argc, char *argv[])
 {
-	if (argc != 2)
+	if (argc != NUMBER_OF_ARGUMENTS)
 	{
-		std::cout << "Incorrect input. The correct command line format:\nlw1.exe <numberOfPoints>\n";
+		std::cout << "Incorrect input. The correct command line format:\nlw1.exe <numberOfPoints> <numberOfThreads>\n";
 		return -1;
 	}
 	else
 	{
-		if (!isdigit(*argv[1]))
+		for (int i = 1; i < NUMBER_OF_ARGUMENTS; i++)
 		{
-			std::cout << "It's not a number: " << argv[1] << endl;
-			return -1;
+			if (!isdigit(*argv[i]))
+			{
+				std::cout << "It's not a number: " << argv[i] << endl;
+				return -1;
+			}
 		}
-		else
+
+		int numAllPoints = atoi(argv[1]);
+		int numThreads = atoi(argv[2]);
+		int numOfPointsInCircle = 0;
+		vector <thread> hTreads;
+		int numPointsInThread = numAllPoints / numThreads;
+		unsigned int startTime = clock();
+		for (int i = 0; i != numThreads; i++)
 		{
-			unsigned int startTime = clock();
-			double piMonteCarlo = getPiMonteCarlo(atoi(argv[1]));
-			unsigned int endTime = clock();
-			cout << "Calculated PI : " << piMonteCarlo << endl;
-			cout << "Time: " << endTime - startTime << endl;
-			return 0;
+			if ((i + 1 == numThreads) && (numAllPoints % numThreads != 0))
+			{
+				numPointsInThread += numAllPoints % numThreads;
+			}
+			hTreads.push_back(thread(getNumInCircle, numPointsInThread, ref(numOfPointsInCircle)));
 		}
+		for (auto &it : hTreads)
+		{
+			it.join();
+		}
+		unsigned int endTime = clock();
+		cout << "Calculated PI : " << numOfPointsInCircle * 4.0 / numAllPoints << endl;
+		cout << "Time: " << endTime - startTime << endl;
+		return 0;
 	}
 }
 
