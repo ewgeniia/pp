@@ -27,7 +27,31 @@ void getNumInCircle(int numberOfPoints, int & numOfPointsInCircle)
 		}
 	}
 }
+double CalculatePiMonteCarlo(int numAllPoints, int numThreads)
+{
+	int numOfPointsInCircle = 0;
+	vector <thread> hTreads;
+	int numPointsInThread = numAllPoints / numThreads;
+	for (int i = 0; i != numThreads; i++)
+	{
+		if ((i + 1 == numThreads) && (numAllPoints % numThreads != 0))
+		{
+			numPointsInThread += numAllPoints % numThreads;
+		}
+		hTreads.push_back(thread(getNumInCircle, numPointsInThread, ref(numOfPointsInCircle)));
+	}
+	for (auto &it : hTreads)
+	{
+		it.join();
+	}
+	return (numOfPointsInCircle * 4.0 / numAllPoints);
+}
 
+void PrintInfo(double piMC, unsigned int time)
+{
+	cout << "Calculated PI : " << piMC << endl;
+	cout << "Time: " << time << endl;
+}
 
 int main(int argc, char *argv[])
 {
@@ -46,28 +70,10 @@ int main(int argc, char *argv[])
 				return -1;
 			}
 		}
-
-		int numAllPoints = atoi(argv[1]);
-		int numThreads = atoi(argv[2]);
-		int numOfPointsInCircle = 0;
-		vector <thread> hTreads;
-		int numPointsInThread = numAllPoints / numThreads;
 		unsigned int startTime = clock();
-		for (int i = 0; i != numThreads; i++)
-		{
-			if ((i + 1 == numThreads) && (numAllPoints % numThreads != 0))
-			{
-				numPointsInThread += numAllPoints % numThreads;
-			}
-			hTreads.push_back(thread(getNumInCircle, numPointsInThread, ref(numOfPointsInCircle)));
-		}
-		for (auto &it : hTreads)
-		{
-			it.join();
-		}
+		double piMonteCarlo = CalculatePiMonteCarlo(atoi(argv[1]), atoi(argv[2]));
 		unsigned int endTime = clock();
-		cout << "Calculated PI : " << numOfPointsInCircle * 4.0 / numAllPoints << endl;
-		cout << "Time: " << endTime - startTime << endl;
+		PrintInfo(piMonteCarlo, endTime - startTime);
 		return 0;
 	}
 }
