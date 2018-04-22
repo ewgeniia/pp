@@ -3,15 +3,25 @@
 
 #include "stdafx.h"
 
+
 using namespace std;
 namespace
 {
 	const int NUMBER_OF_ARGUMENTS = 3;
+	const int MAX_NUMBER_OF_THREADS = 64;
+	const double RADIUS = 1.0;
 }
 
-void getNumInCircle(int numberOfPoints, int & numOfPointsInCircle)
+struct paramsForCalc
 {
-	double radius = 1.0;
+	int numPointsInThread;
+	int pointsInCircle = 0;
+};
+
+DWORD WINAPI GetNumInCircle(void *data)
+{
+	paramsForCalc *p = (paramsForCalc *)data;
+	int numberOfPoints = p->numPointsInThread;
 	double x;
 	double y;
 	random_device rd; // access hardware RNG
@@ -21,16 +31,18 @@ void getNumInCircle(int numberOfPoints, int & numOfPointsInCircle)
 	{
 		x = d(e);
 		y = d(e);
-		if ((x * x + y * y) <= radius * radius)
+		if ((x * x + y * y) <= RADIUS * RADIUS)
 		{
-			numOfPointsInCircle++;
+			p->pointsInCircle += 1;
 		}
 	}
+	return 0;
 }
 double CalculatePiMonteCarlo(int numAllPoints, int numThreads)
 {
 	int numOfPointsInCircle = 0;
-	vector <thread> hTreads;
+	vector <HANDLE> hTreads;
+	paramsForCalc params[MAX_NUMBER_OF_THREADS];
 	int numPointsInThread = numAllPoints / numThreads;
 	for (int i = 0; i != numThreads; i++)
 	{
@@ -38,11 +50,16 @@ double CalculatePiMonteCarlo(int numAllPoints, int numThreads)
 		{
 			numPointsInThread += numAllPoints % numThreads;
 		}
-		hTreads.push_back(thread(getNumInCircle, numPointsInThread, ref(numOfPointsInCircle)));
+		params[i].numPointsInThread = numPointsInThread;
+		hTreads.push_back(CreateThread(NULL, 0, &GetNumInCircle, &params[i], 0, NULL));
 	}
 	for (auto &it : hTreads)
 	{
-		it.join();
+		WaitForSingleObject(it, INFINITE);
+	}
+	for (int i = 0; i != numThreads; i++)
+	{
+		numOfPointsInCircle += params[i].pointsInCircle;
 	}
 	return (numOfPointsInCircle * 4.0 / numAllPoints);
 }
@@ -53,12 +70,12 @@ void PrintInfo(double piMC, unsigned int time)
 	cout << "Time: " << time << endl;
 }
 
-int main(int argc, char *argv[])
+bool isCorrectArgs(int argc, char *argv[])
 {
 	if (argc != NUMBER_OF_ARGUMENTS)
 	{
 		std::cout << "Incorrect input. The correct command line format:\nlw1.exe <numberOfPoints> <numberOfThreads>\n";
-		return -1;
+		return FALSE;
 	}
 	else
 	{
@@ -67,14 +84,34 @@ int main(int argc, char *argv[])
 			if (!isdigit(*argv[i]))
 			{
 				std::cout << "It's not a number: " << argv[i] << endl;
-				return -1;
+				return FALSE;
 			}
 		}
+	}
+	if (atoi(argv[2]) <= MAX_NUMBER_OF_THREADS && atoi(argv[2]) >= 1)
+	{
+		return TRUE;
+	}
+	else
+	{
+		cout << atoi(argv[2]) << " must be >= 1 and <= 64" << endl;
+		return FALSE;
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	if (isCorrectArgs(argc, argv))
+	{
 		unsigned int startTime = clock();
 		double piMonteCarlo = CalculatePiMonteCarlo(atoi(argv[1]), atoi(argv[2]));
 		unsigned int endTime = clock();
 		PrintInfo(piMonteCarlo, endTime - startTime);
-		return 0;
 	}
+	else
+	{
+		return -1;
+	}
+		return 0;
 }
 
