@@ -26,12 +26,28 @@ double getPiMonteCarlo(int numberOfPoints)
 	return (numOfPointsInCircle * 4.0 / numberOfPoints);
 	}
 
-int main()
+int main(int argc, char *argv[])
 {
-	unsigned int startTime = clock();
-	double piMonteCarlo = getPiMonteCarlo(1000);
-	unsigned int endTime = clock();
-	cout << "Calculated PI : " << piMonteCarlo << endl;
-	cout << "Time: " << endTime - startTime << endl;
-	return 0;
+	if (argc != 2)
+		{
+		std::cout << "Incorrect input. The correct command line format:\nlw1.exe <numberOfPoints>\n";
+		return -1;
+		}
+	else
+	{
+		if (!isdigit(*argv[1]))
+		{
+			std::cout << "It's not a number: " << argv[1] << endl;
+			return -1;
+		}
+		else
+		{
+			unsigned int startTime = clock();
+			double piMonteCarlo = getPiMonteCarlo(atoi(argv[1]));
+			unsigned int endTime = clock();
+			cout << "Calculated PI : " << piMonteCarlo << endl;
+			cout << "Time: " << endTime - startTime << endl;
+			return 0;
+		}
+	}
 }
