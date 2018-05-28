@@ -16,3 +16,4 @@
 #include <ctime>
 #include <iostream>
 #include <random>
+#include <omp.h>

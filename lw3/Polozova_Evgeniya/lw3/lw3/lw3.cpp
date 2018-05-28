@@ -4,8 +4,43 @@
 #include "stdafx.h"
 
 using namespace std;
+namespace
+{
+	const int NUMBER_OF_ARGUMENTS = 3;
+	const int MAX_NUMBER_OF_THREADS = 64;
+	const double RADIUS = 1.0;
+}
 
-double getPiMonteCarlo(int numberOfPoints)
+bool isCorrectArgs(int argc, char *argv[])
+{
+	if (argc != NUMBER_OF_ARGUMENTS)
+	{
+		std::cout << "Incorrect input. The correct command line format:\nlw1.exe <numberOfPoints> <numberOfThreads>\n";
+		return false;
+	}
+	else
+	{
+		for (int i = 1; i < NUMBER_OF_ARGUMENTS; i++)
+		{
+			if (!isdigit(*argv[i]))
+			{
+				std::cout << "It's not a number: " << argv[i] << endl;
+				return false;
+			}
+		}
+	}
+	if (atoi(argv[2]) <= MAX_NUMBER_OF_THREADS && atoi(argv[2]) >= 1)
+	{
+		return true;
+	}
+	else
+	{
+		cout << atoi(argv[2]) << " must be >= 1 and <= 64" << endl;
+		return false;
+	}
+}
+
+double CalculatePiMonteCarlo(int numberOfPoints, int numThreads)
 {
 	int numOfPointsInCircle = 0;
 	double radius = 1.0;
@@ -14,6 +49,8 @@ double getPiMonteCarlo(int numberOfPoints)
 	random_device rd; // access hardware RNG
 	default_random_engine e(rd()); // seed the software PRNG
 	uniform_real_distribution<> d(-1, 1); // range
+	omp_set_num_threads(numThreads);
+	#pragma omp parallel for
 	for (int i = 0; i < numberOfPoints; i++)
 		{
 		x = d(e);
@@ -24,30 +61,26 @@ double getPiMonteCarlo(int numberOfPoints)
 			}
 		}
 	return (numOfPointsInCircle * 4.0 / numberOfPoints);
-	}
+}
+
+void PrintInfo(double piMC, unsigned int time)
+{
+	cout << "Calculated PI : " << piMC << endl;
+	cout << "Time: " << time << endl;
+}
 
 int main(int argc, char *argv[])
 {
-	if (argc != 2)
-		{
-		std::cout << "Incorrect input. The correct command line format:\nlw1.exe <numberOfPoints>\n";
-		return -1;
-		}
+	if (isCorrectArgs(argc, argv))
+	{
+		unsigned int startTime = clock();
+		double piMonteCarlo = CalculatePiMonteCarlo(atoi(argv[1]), atoi(argv[2]));
+		unsigned int endTime = clock();
+		PrintInfo(piMonteCarlo, endTime - startTime);
+	}
 	else
 	{
-		if (!isdigit(*argv[1]))
-		{
-			std::cout << "It's not a number: " << argv[1] << endl;
-			return -1;
-		}
-		else
-		{
-			unsigned int startTime = clock();
-			double piMonteCarlo = getPiMonteCarlo(atoi(argv[1]));
-			unsigned int endTime = clock();
-			cout << "Calculated PI : " << piMonteCarlo << endl;
-			cout << "Time: " << endTime - startTime << endl;
-			return 0;
-		}
+		return -1;
 	}
+	return 0;
 }
