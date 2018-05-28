@@ -15,3 +15,4 @@
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
 #include "windows.h"
 #include <iostream>
+#include <vector>

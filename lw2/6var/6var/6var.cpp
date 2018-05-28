@@ -2,13 +2,16 @@
 //
 
 #include "stdafx.h"
-#include "process.h" 
 #include "CSmoker.h"
-#include <vector>
+#include <algorithm>
+#include <iterator>
+#include "CDealer.h"
 
 using namespace std;
 
 HANDLE event;
+vector <int> table;
+
 
 void main()
 {
@@ -20,17 +23,25 @@ void main()
 		cout << i;
 		smokers[i].RunThread();
 	}*/
-	CSmoker smoker1(1);
-	CSmoker smoker2(2);
-	CSmoker smoker3(3);
+	CSmoker smoker1(0);
+	CSmoker smoker2(1);
+	CSmoker smoker3(2);
 	smoker1.RunThread();
 	smoker2.RunThread();
 	smoker3.RunThread();
-	if (event != NULL) {
-		Sleep(1000);
-		SetEvent(event);
-		Sleep(1000);
-		ResetEvent(event);
+	CDealer dealer;
+	dealer.RunThread();
+	table.resize(3);
+	if (event != NULL) 
+	{
+		while (true)
+		{
+			SetEvent(event);
+			Sleep(1000);
+			std::copy(table.begin(), table.end(), std::ostream_iterator<int>(std::cout, " "));
+			ResetEvent(event);
+			Sleep(1000);
+		}
 		CloseHandle(event);
 	}
 	else {
