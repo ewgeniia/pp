@@ -15,7 +15,7 @@ bool isCorrectArgs(int argc, char *argv[])
 {
 	if (argc != NUMBER_OF_ARGUMENTS)
 	{
-		std::cout << "Incorrect input. The correct command line format:\nlw1.exe <numberOfPoints> <numberOfThreads>\n";
+		cout << "Incorrect input. The correct command line format:\nlw3.exe <numberOfPoints> <numberOfThreads>\n";
 		return false;
 	}
 	else
@@ -24,7 +24,7 @@ bool isCorrectArgs(int argc, char *argv[])
 		{
 			if (!isdigit(*argv[i]))
 			{
-				std::cout << "It's not a number: " << argv[i] << endl;
+				cout << "It's not a number: " << argv[i] << endl;
 				return false;
 			}
 		}
