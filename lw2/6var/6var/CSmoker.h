@@ -1,14 +1,15 @@
 #pragma once
 #include "stdafx.h"
+#include "CEvent.h"
 
 class CSmoker
 {
 public:
-	CSmoker(int i);
-	void RunThread();
+	CSmoker(int i, std::shared_ptr<CEvent> smokerFinishedEvent);
+	void SearchAndSmoke();
 private:
-	static DWORD WINAPI ThreadFunc(LPVOID lpParam);
-	std::vector<int> m_materials;
+	std::vector<bool> m_materials;
 	int m_intVar;
-	int size = 3;
+	int m_size = 3;
+	std::shared_ptr<CEvent> m_smokerFinishedEvent;
 };

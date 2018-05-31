@@ -1,50 +1,34 @@
 #include "stdafx.h"
 #include "CDealer.h"
 
-extern HANDLE event;
-extern std::vector <int> table;
-
-CDealer::CDealer()
+CDealer::CDealer(std::shared_ptr<CEvent> smokerFinishedEvent)
 {
-	materials.resize(size);
+	m_smokerFinishedEvent = smokerFinishedEvent;
+	m_materials.resize(m_size);
 }
-std::vector <int> CDealer::GetMaterials()
+std::vector <bool> CDealer::PutMaterials()
 {
 	int missingMaterial = rand() % 3;
 	for (int i = 0; i < 3; i++)
 	{
 		if (i == missingMaterial)
 		{
-			materials[i] = 0;
+			m_materials[i] = false;
 		}
 		else
 		{
-			materials[i] = 1;
+			m_materials[i] = true;
 		}
 	}
-	return materials;
+	return m_materials;
 }
-DWORD WINAPI CDealer::ThreadFunc(LPVOID lpParam)
-{
 
-	CDealer* dealer = (CDealer*)lpParam;
-	//cout << smoker->materials.size();
-	DWORD dwWaitResult = WaitForSingleObject(event, 1);
-	while (dwWaitResult != WAIT_OBJECT_0)
+void CDealer::CheckTable()
+{
+	while (true)
 	{
-		table = dealer->GetMaterials();
-		std::cout << "Test dealer" << std::endl;
-		dwWaitResult = WaitForSingleObject(event, 1);
-		//SetEvent(event);
+		m_smokerFinishedEvent->WaitUntilSignalled();
+		m_materials = PutMaterials();
+		std::cout << "Dealer put materials\n";
 	}
-	//std::copy(mat.begin(), mat.end(), std::ostream_iterator<int>(std::cout, " "));
-	return 0;
-}
-
-void CDealer::RunThread()
-{
-	HANDLE hThread;
-	DWORD idThread;
-	// передаем потоковой функции указатель на текущий объект
-	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc, this, 0, &idThread);
 }

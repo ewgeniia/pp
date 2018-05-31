@@ -6,47 +6,33 @@
 #include <algorithm>
 #include <iterator>
 #include "CDealer.h"
+#include "CThread.h"
 
 using namespace std;
 
-HANDLE event;
-vector <int> table;
-
+namespace
+{
+	int NUMBER_OF_SMOKERS = 3;
+}
 
 void main()
 {
-	event = CreateEvent(NULL, TRUE, FALSE, TEXT("FirstStep"));
-	/*vector <CSmoker> smokers;
-	for (int i = 0; i < 5; i++)
+	auto smokeFinishedSmoking = std::make_shared<CEvent>(true);
+	std::vector<std::unique_ptr<CSmoker>> smokers;
+	smokers.reserve(NUMBER_OF_SMOKERS);
+	for (int i = 0; i < NUMBER_OF_SMOKERS; i++)
 	{
-		smokers.push_back(CSmoker(i));
-		cout << i;
-		smokers[i].RunThread();
-	}*/
-	CSmoker smoker1(0);
-	CSmoker smoker2(1);
-	CSmoker smoker3(2);
-	smoker1.RunThread();
-	smoker2.RunThread();
-	smoker3.RunThread();
-	CDealer dealer;
-	dealer.RunThread();
-	table.resize(3);
-	if (event != NULL) 
+		smokers.push_back(std::make_unique<CSmoker>(i, smokeFinishedSmoking));
+	}
+	CDealer dealer(smokeFinishedSmoking);
+	std::vector<std::unique_ptr<CThread>> threads;
+	for (auto& smoker : smokers)
 	{
-		while (true)
-		{
-			SetEvent(event);
-			Sleep(1000);
-			std::copy(table.begin(), table.end(), std::ostream_iterator<int>(std::cout, " "));
-			ResetEvent(event);
-			Sleep(1000);
-		}
-		CloseHandle(event);
+		threads.push_back(std::make_unique<CThread>(std::move([&smoker]() { smoker->SearchAndSmoke(); })));
 	}
-	else {
-		cout << "error create event" << endl;
+	threads.push_back(std::make_unique<CThread>(std::move([&dealer]() { dealer.CheckTable(); })));
+	for (auto& thread : threads)
+	{
+		thread->Join();
 	}
-
 }
-

@@ -1,14 +1,15 @@
 #pragma once
 #include "stdafx.h"
+#include "CEvent.h"
 
 class CDealer
 {
 public:
-	void RunThread();
-	CDealer();
-	std::vector <int> GetMaterials();
+	CDealer(std::shared_ptr<CEvent> smokerFinishedEvent);
+	void CheckTable();
 private:
-	static DWORD WINAPI ThreadFunc(LPVOID lpParam);
-	std::vector <int> materials;
-	int size = 3;
+	std::vector <bool> PutMaterials();
+	std::vector <bool> m_materials;
+	std::shared_ptr<CEvent> m_smokerFinishedEvent;
+	int m_size = 3;
 };
